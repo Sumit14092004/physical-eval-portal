@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: physical_eval_portal
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/physical_eval_portal
+      SYNC_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/physical_eval_portal
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+  celery_worker:
+    build: ./backend
+    command: celery -A app.core.celery_app.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/physical_eval_portal
+      SYNC_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/physical_eval_portal
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+  celery_beat:
+    build: ./backend
+    command: celery -A app.core.celery_app.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/physical_eval_portal
+      SYNC_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/physical_eval_portal
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  pgdata:
+
+# Note: the frontend isn't included as a service here -- for local dev,
+# run it directly with `npm run dev` (frontend/) so you get Vite's fast
+# hot-reload; the Vite dev server proxy (vite.config.ts) already forwards
+# /api to this backend on :8000. See docker-compose.prod.yml for the
+# containerized frontend (nginx) used in production.

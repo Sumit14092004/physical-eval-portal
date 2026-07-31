@@ -1,0 +1,38 @@
+# Render Blueprint for a free-tier portfolio deployment.
+#
+# Deploy: push this repo to GitHub, then in the Render dashboard choose
+# "New > Blueprint" and point it at the repo. Render reads this file and
+# provisions the service automatically.
+#
+# Database is NOT defined here -- Render's free Postgres expires after
+# 30 days, so this deployment uses Neon instead (see DEPLOY_FREE.md).
+# Create the Neon database first, then paste its connection string into
+# DATABASE_URL / SYNC_DATABASE_URL below (or as dashboard secrets).
+#
+# No Redis, no separate worker: CELERY_TASK_ALWAYS_EAGER=true makes rank
+# recomputation run synchronously in the same request instead of
+# dispatching to a background worker -- see app/core/celery_app.py for
+# why. Fine for portfolio-demo traffic; not what you'd want at real scale
+# (use docker-compose.prod.yml + a real worker for that).
+
+services:
+  - type: web
+    name: physical-eval-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "alembic upgrade head && gunicorn app.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SYNC_DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: CELERY_TASK_ALWAYS_EAGER
+        value: "true"
+      - key: REDIS_URL
+        value: "redis://localhost:6379/0"

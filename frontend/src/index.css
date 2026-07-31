@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Merriweather", Georgia, serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  /* Institutional palette, inspired by Indian government portal conventions:
+     navy header, tricolor accent stripe, gray-blue working background. */
+  --color-navy: #0B3D65;
+  --color-navy-dark: #082A47;
+  --color-maroon: #7A1F2B;
+  --color-saffron: #FF9933;
+  --color-indiagreen: #138808;
+  --color-paper: #F2F4F6;
+  --color-paper-dim: #E6E9ED;
+  --color-ink: #1A1E23;
+  --color-ink-soft: #545B63;
+  --color-line: #D3D9DF;
+  --color-gold: #B08D2E;
+  --color-signal: #A63A2E;
+  --color-signal-soft: #F0DAD6;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The tricolor accent stripe used under the main header -- a structural
+   device that reads as "official India government portal" without
+   reproducing any protected emblem. */
+.tricolor-stripe {
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    var(--color-saffron) 0%, var(--color-saffron) 33.33%,
+    #FFFFFF 33.33%, #FFFFFF 66.66%,
+    var(--color-indiagreen) 66.66%, var(--color-indiagreen) 100%
+  );
+}
+
+.register-row {
+  border-bottom: 1px solid var(--color-line);
+}
+.register-row:last-child {
+  border-bottom: none;
+}

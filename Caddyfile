@@ -1,0 +1,16 @@
+{$DOMAIN} {
+	# Frontend (static SPA, served by the frontend/nginx container)
+	reverse_proxy frontend:80
+
+	# Backend API. Note: frontend/nginx.conf *also* proxies /api/ to the
+	# backend -- that's intentional redundancy so the frontend container
+	# still works correctly if ever run standalone (behind a different
+	# proxy, or directly). Caddy intercepting /api/* here first just
+	# means that inner nginx proxy never actually gets exercised in this
+	# stack; harmless either way.
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	encode gzip
+}
