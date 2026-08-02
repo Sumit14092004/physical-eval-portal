@@ -24,6 +24,8 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "alembic upgrade head && gunicorn app.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: DATABASE_URL
         sync: false
       - key: SYNC_DATABASE_URL
