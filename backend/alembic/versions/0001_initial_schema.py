@@ -16,6 +16,16 @@ depends_on = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if "users" in inspector.get_table_names():
+        # A previous deploy attempt (e.g. Render's auto-deploy-on-push
+        # racing a manual redeploy of the same commit) already got this
+        # far. This migration is all-or-nothing, so if the first table
+        # exists, treat the whole thing as already applied rather than
+        # erroring out on every subsequent CREATE TABLE.
+        return
+
     user_role = postgresql.ENUM("admin", "instructor", "trainee", name="user_role")
     test_category = postgresql.ENUM("bpet", "ppt", name="test_category")
     comparison_type = postgresql.ENUM("lower_is_better", "higher_is_better", name="comparison_type")
@@ -23,13 +33,29 @@ def upgrade() -> None:
     result_status = postgresql.ENUM("pass", "fail", name="result_status")
     indoor_outdoor = postgresql.ENUM("indoor", "outdoor", name="indoor_outdoor")
 
-    bind = op.get_bind()
-    user_role.create(bind, checkfirst=True)
-    test_category.create(bind, checkfirst=True)
-    comparison_type.create(bind, checkfirst=True)
-    grade_level.create(bind, checkfirst=True)
-    result_status.create(bind, checkfirst=True)
-    indoor_outdoor.create(bind, checkfirst=True)
+    # Raw idempotent DDL instead of ENUM(...).create(bind, checkfirst=True):
+    # checkfirst does a SELECT-then-CREATE, which has a race window if two
+    # deploy attempts overlap (e.g. Render's auto-deploy-on-push firing
+    # while a manual deploy from the same commit is also running) -- both
+    # can pass the check before either commits the CREATE, and the second
+    # CREATE then fails with "already exists". Wrapping in a DO block with
+    # an exception handler makes this genuinely idempotent regardless of
+    # timing, not just "usually fine."
+    for enum_name, values in [
+        ("user_role", ("admin", "instructor", "trainee")),
+        ("test_category", ("bpet", "ppt")),
+        ("comparison_type", ("lower_is_better", "higher_is_better")),
+        ("grade_level", ("excellent", "good", "satisfactory", "fail")),
+        ("result_status", ("pass", "fail")),
+        ("indoor_outdoor", ("indoor", "outdoor")),
+    ]:
+        values_sql = ", ".join(f"'{v}'" for v in values)
+        op.execute(f"""
+            DO $$ BEGIN
+                CREATE TYPE {enum_name} AS ENUM ({values_sql});
+            EXCEPTION WHEN duplicate_object THEN NULL;
+            END $$;
+        """)
 
     op.create_table(
         "users",
