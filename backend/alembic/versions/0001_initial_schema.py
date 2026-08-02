@@ -26,12 +26,18 @@ def upgrade() -> None:
         # erroring out on every subsequent CREATE TABLE.
         return
 
-    user_role = postgresql.ENUM("admin", "instructor", "trainee", name="user_role")
-    test_category = postgresql.ENUM("bpet", "ppt", name="test_category")
-    comparison_type = postgresql.ENUM("lower_is_better", "higher_is_better", name="comparison_type")
-    grade_level = postgresql.ENUM("excellent", "good", "satisfactory", "fail", name="grade_level")
-    result_status = postgresql.ENUM("pass", "fail", name="result_status")
-    indoor_outdoor = postgresql.ENUM("indoor", "outdoor", name="indoor_outdoor")
+    # create_type=False on all of these: we create the actual Postgres
+    # types ourselves via the DO blocks above. Without this,
+    # SQLAlchemy's ENUM defaults to create_type=True and silently emits
+    # its own bare `CREATE TYPE` as a side effect of create_table()
+    # below -- a second, unprotected creation attempt that collides
+    # with the one we just made idempotent.
+    user_role = postgresql.ENUM("admin", "instructor", "trainee", name="user_role", create_type=False)
+    test_category = postgresql.ENUM("bpet", "ppt", name="test_category", create_type=False)
+    comparison_type = postgresql.ENUM("lower_is_better", "higher_is_better", name="comparison_type", create_type=False)
+    grade_level = postgresql.ENUM("excellent", "good", "satisfactory", "fail", name="grade_level", create_type=False)
+    result_status = postgresql.ENUM("pass", "fail", name="result_status", create_type=False)
+    indoor_outdoor = postgresql.ENUM("indoor", "outdoor", name="indoor_outdoor", create_type=False)
 
     # Raw idempotent DDL instead of ENUM(...).create(bind, checkfirst=True):
     # checkfirst does a SELECT-then-CREATE, which has a race window if two
