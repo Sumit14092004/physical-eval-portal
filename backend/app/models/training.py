@@ -20,7 +20,7 @@ class TrainingRecord(Base):
     trainee_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("trainees.id"), nullable=False, index=True)
     subject_name: Mapped[str] = mapped_column(String(150), nullable=False)
     instructor_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    indoor_outdoor: Mapped[IndoorOutdoor] = mapped_column(SAEnum(IndoorOutdoor, name="indoor_outdoor"), nullable=False)
+    indoor_outdoor: Mapped[IndoorOutdoor] = mapped_column(SAEnum(IndoorOutdoor, name="indoor_outdoor", values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     periods_attended: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     periods_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 

@@ -17,11 +17,11 @@ class PhysicalActivity(Base):
     __tablename__ = "physical_activities"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    test_category: Mapped[TestCategory] = mapped_column(SAEnum(TestCategory, name="test_category"), nullable=False)
+    test_category: Mapped[TestCategory] = mapped_column(SAEnum(TestCategory, name="test_category", values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)  # "5 km Race", "V-Rope", "Chin up"...
     unit: Mapped[str] = mapped_column(String(20), nullable=False)   # "min", "mtr", "feet", "sec", "count"
     comparison_type: Mapped[ComparisonType] = mapped_column(
-        SAEnum(ComparisonType, name="comparison_type"), nullable=False
+        SAEnum(ComparisonType, name="comparison_type", values_callable=lambda obj: [e.value for e in obj]), nullable=False
     )
 
     standards: Mapped[list["PhysicalStandard"]] = relationship(back_populates="activity")
@@ -67,7 +67,7 @@ class PhysicalTestResult(Base):
     test_date: Mapped[date] = mapped_column(Date, nullable=False)
     raw_value: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
     computed_grade: Mapped[GradeLevel | None] = mapped_column(
-        SAEnum(GradeLevel, name="grade_level"), nullable=True
+        SAEnum(GradeLevel, name="grade_level", values_callable=lambda obj: [e.value for e in obj]), nullable=True
     )  # cached at write time by the grading service; recomputable anytime
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
     recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)

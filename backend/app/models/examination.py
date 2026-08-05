@@ -25,7 +25,7 @@ class WeeklyTest(Base):
     maximum_marks: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
     marks_obtained: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
     percentage: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)  # auto-calculated
-    result_status: Mapped[ResultStatus] = mapped_column(SAEnum(ResultStatus, name="result_status"), nullable=False)
+    result_status: Mapped[ResultStatus] = mapped_column(SAEnum(ResultStatus, name="result_status", values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
 
