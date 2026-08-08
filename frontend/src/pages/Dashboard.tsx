@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const CARDS = [
@@ -28,16 +29,16 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-2 gap-4 max-w-2xl">
         {CARDS.filter((c) => role && c.roles.includes(role)).map((c) => (
-          <a
+          <Link
             key={c.to}
-            href={c.to}
+            to={c.to}
             className="bg-white border border-line p-5 hover:border-navy transition-colors"
           >
             <div className="font-display text-lg font-semibold text-ink">
               {c.label}
             </div>
             <div className="text-xs text-ink-soft mt-1">{c.desc}</div>
-          </a>
+          </Link>
         ))}
       </div>
     </div>
