@@ -13,17 +13,28 @@ export function useBatches() {
   const [selectedBatchId, setSelectedBatchId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api
+  const fetchBatches = () => {
+    setLoading(true);
+    return api
       .get<Batch[]>("/org/batches")
       .then((res) => {
         setBatches(res.data);
-        if (res.data.length > 0) setSelectedBatchId(res.data[0].id);
+        // Keep the current selection if it still exists (e.g. after a
+        // refetch); only default to the first batch if nothing is
+        // selected yet, so creating a new batch doesn't yank the admin
+        // back to whatever batch happens to be first.
+        setSelectedBatchId((prev) =>
+          prev && res.data.some((b) => b.id === prev) ? prev : (res.data[0]?.id ?? "")
+        );
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchBatches();
   }, []);
 
-  return { batches, selectedBatchId, setSelectedBatchId, loading };
+  return { batches, selectedBatchId, setSelectedBatchId, loading, refetch: fetchBatches };
 }
 
 export function BatchSelector({

@@ -163,9 +163,7 @@ function BulkImportForm({ batchId }: { batchId: string }) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const { data } = await api.post(`/org/trainees/bulk-import?batch_id=${batchId}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data } = await api.post(`/org/trainees/bulk-import?batch_id=${batchId}`, formData);
       setResult(data);
     } catch {
       setError("Import failed. Check the CSV has the required columns: email, password, full_name, enrollment_number, date_of_birth, gender.");
@@ -214,8 +212,7 @@ function BulkImportForm({ batchId }: { batchId: string }) {
 }
 
 export default function Admin() {
-  const { batches, selectedBatchId, setSelectedBatchId, loading } = useBatches();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const { batches, selectedBatchId, setSelectedBatchId, loading, refetch } = useBatches();
 
   return (
     <div className="p-8 max-w-2xl">
@@ -228,12 +225,12 @@ export default function Admin() {
       </div>
 
       <SectionCard title="Create a Batch" subtitle="A training cohort — trainees, exams, and ranks are scoped to a batch.">
-        <CreateBatchForm onCreated={() => setRefreshKey((k) => k + 1)} />
+        <CreateBatchForm onCreated={refetch} />
       </SectionCard>
 
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs font-medium text-ink-soft uppercase tracking-wide">Working batch</span>
-        <BatchSelector key={refreshKey} batches={batches} value={selectedBatchId} onChange={setSelectedBatchId} />
+        <BatchSelector batches={batches} value={selectedBatchId} onChange={setSelectedBatchId} />
       </div>
 
       {!loading && batches.length === 0 && (
