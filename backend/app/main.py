@@ -19,7 +19,7 @@ app.include_router(auth.router)
 app.include_router(physical_evaluation.router)
 app.include_router(training.router)
 app.include_router(examinations.router)
- app.include_router(fpet.router)
+app.include_router(fpet.router)
 
 
 @app.on_event("startup")
