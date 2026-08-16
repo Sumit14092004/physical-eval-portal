@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import auth, physical_evaluation, training, examinations, org
+from app.routers import auth, physical_evaluation, training, examinations, org, fpet
 from app.startup import run_startup_tasks
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -19,7 +19,7 @@ app.include_router(auth.router)
 app.include_router(physical_evaluation.router)
 app.include_router(training.router)
 app.include_router(examinations.router)
-app.include_router(org.router)
+ app.include_router(fpet.router)
 
 
 @app.on_event("startup")
