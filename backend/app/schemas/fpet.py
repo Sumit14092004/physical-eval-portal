@@ -20,6 +20,7 @@ class FpetTemplateOut(BaseModel):
 class FpetResultIn(BaseModel):
     trainee_id: uuid.UUID
     test_date: date
+    raw_performances: dict[str, str] = {}  # {"3.2 KMS Run": "14:30", "Push Ups": "40"}
     marks: dict[str, float]  # {"3.2 KMS Run": 10, ...} -- must match the template exactly
 
 
@@ -29,6 +30,7 @@ class FpetResultOut(BaseModel):
     test_date: date
     gender: str
     age_band: str
+    raw_performances: dict[str, str]
     marks: dict[str, float]
     total_marks: float
     max_total: float

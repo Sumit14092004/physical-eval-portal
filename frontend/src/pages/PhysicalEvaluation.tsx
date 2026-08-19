@@ -23,6 +23,7 @@ interface FpetResult {
   max_total: number;
   percentage: number;
   grade: string;
+  raw_performances: Record<string, string>;
 }
 
 interface FpetHistoryEntry extends FpetResult {
@@ -43,6 +44,20 @@ const GRADE_STYLES: Record<string, string> = {
   Fail: "bg-signal text-white",
 };
 
+
+function getActivityUnitInfo(name: string): { type: string; label: string } {
+  const n = name.toLowerCase();
+  if (n.includes("run")) return { type: "time_mmss", label: "mm:ss" };
+  if (n.includes("sprint")) return { type: "number", label: "sec" };
+  if (n.includes("push ups")) return { type: "number", label: "reps" };
+  if (n.includes("m/rope")) return { type: "number", label: "meters" };
+  if (n.includes("vertical rope")) return { type: "number", label: "sec" };
+  if (n.includes("ditch")) return { type: "number", label: "feet" };
+  if (n.includes("wall")) return { type: "number", label: "attempts" };
+  if (n.includes("f/lift")) return { type: "number", label: "sec" };
+  return { type: "text", label: "value" };
+}
+
 export default function PhysicalEvaluation() {
   const { batches, selectedBatchId, setSelectedBatchId } = useBatches();
   const { trainees } = useTrainees(selectedBatchId);
@@ -51,6 +66,7 @@ export default function PhysicalEvaluation() {
   const [template, setTemplate] = useState<FpetTemplate | null>(null);
   const [templateLoading, setTemplateLoading] = useState(false);
   const [marks, setMarks] = useState<Record<string, string>>({});
+  const [rawPerformances, setRawPerformances] = useState<Record<string, string>>({});
   const [testDate, setTestDate] = useState(new Date().toISOString().slice(0, 10));
   const [history, setHistory] = useState<FpetHistoryEntry[]>([]);
 
@@ -75,6 +91,7 @@ export default function PhysicalEvaluation() {
         const blank: Record<string, string> = {};
         data.activities.forEach((a) => (blank[a.name] = ""));
         setMarks(blank);
+        setRawPerformances({ ...blank });
       })
       .finally(() => setTemplateLoading(false));
 
@@ -85,6 +102,9 @@ export default function PhysicalEvaluation() {
 
   const updateMark = (name: string, value: string) =>
     setMarks((m) => ({ ...m, [name]: value }));
+
+  const updateRaw = (name: string, value: string) =>
+    setRawPerformances((r) => ({ ...r, [name]: value }));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -99,6 +119,7 @@ export default function PhysicalEvaluation() {
       const { data } = await api.post<FpetHistoryEntry>("/fpet/results", {
         trainee_id: traineeId,
         test_date: testDate,
+        raw_performances: rawPerformances,
         marks: numericMarks,
       });
       setResult(data);
@@ -162,18 +183,63 @@ export default function PhysicalEvaluation() {
 
           <div className="space-y-3">
             {template.activities.map((a) => (
-              <div key={a.name} className="grid grid-cols-[1fr_8rem] gap-4 items-center">
+              <div key={a.name} className="grid grid-cols-[1fr_auto_8rem] gap-4 items-center">
                 <span className="text-sm">{a.name}</span>
-                <div className="flex items-center gap-2">
+                
+                {/* Raw Performance Input */}
+                <div className="flex items-center gap-2 justify-end">
+                  {getActivityUnitInfo(a.name).type === "time_mmss" ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        placeholder="MM"
+                        maxLength={2}
+                        value={(rawPerformances[a.name] || "").split(":")[0] || ""}
+                        onChange={(e) => {
+                          const parts = (rawPerformances[a.name] || ":").split(":");
+                          updateRaw(a.name, `${e.target.value}:${parts[1] || ""}`);
+                        }}
+                        className="w-10 border border-line px-2 py-1.5 bg-paper font-mono-num text-sm text-center focus:outline-none focus:border-navy"
+                      />
+                      <span className="text-ink-soft font-bold">:</span>
+                      <input
+                        type="text"
+                        placeholder="SS"
+                        maxLength={2}
+                        value={(rawPerformances[a.name] || "").split(":")[1] || ""}
+                        onChange={(e) => {
+                          const parts = (rawPerformances[a.name] || ":").split(":");
+                          updateRaw(a.name, `${parts[0] || ""}:${e.target.value}`);
+                        }}
+                        className="w-10 border border-line px-2 py-1.5 bg-paper font-mono-num text-sm text-center focus:outline-none focus:border-navy"
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      type={getActivityUnitInfo(a.name).type === "number" ? "number" : "text"}
+                      step="any"
+                      required
+                      placeholder="Value"
+                      value={rawPerformances[a.name] ?? ""}
+                      onChange={(e) => updateRaw(a.name, e.target.value)}
+                      className="w-20 border border-line px-2 py-1.5 bg-paper font-mono-num text-sm text-right focus:outline-none focus:border-navy"
+                    />
+                  )}
+                  <span className="font-mono-num text-xs text-ink-soft w-16">{getActivityUnitInfo(a.name).label}</span>
+                </div>
+
+                {/* Marks Input */}
+                <div className="flex items-center gap-2 border-l border-line pl-4">
                   <input
                     type="number"
                     step="0.5"
                     min={0}
                     max={a.max_marks}
                     required
+                    placeholder="Marks"
                     value={marks[a.name] ?? ""}
                     onChange={(e) => updateMark(a.name, e.target.value)}
-                    className="w-16 border border-line px-2 py-1.5 bg-paper font-mono-num text-sm text-right focus:outline-none focus:border-navy"
+                    className="w-16 border border-line px-2 py-1.5 bg-paper font-mono-num text-sm text-right focus:outline-none focus:border-navy bg-yellow-50"
                   />
                   <span className="font-mono-num text-xs text-ink-soft">/ {a.max_marks}</span>
                 </div>

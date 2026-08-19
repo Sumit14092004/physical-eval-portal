@@ -83,6 +83,7 @@ async def record_fpet_result(
         test_date=payload.test_date,
         gender=trainee.gender,
         age_band=age_band,
+        raw_performances=payload.raw_performances,
         marks=payload.marks,
         total_marks=total,
         max_total=max_total,

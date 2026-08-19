@@ -29,6 +29,7 @@ class FpetResult(Base):
     gender: Mapped[str] = mapped_column(String(20), nullable=False)
     age_band: Mapped[str] = mapped_column(String(20), nullable=False)  # "below_35" | "35_40" | "40_45" | "female"
 
+    raw_performances: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default='{}')  # {"3.2 KMS Run": "14:30", "Push Ups": "40"}
     marks: Mapped[dict] = mapped_column(JSONB, nullable=False)  # {"3.2 KMS Run": 10, "M/Rope": 8, ...}
     total_marks: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
     max_total: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
